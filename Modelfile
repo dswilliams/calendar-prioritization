@@ -1,0 +1,10 @@
+FROM ./mistral-7b-instruct-v0.1.Q4_K_M.gguf
+
+    TEMPLATE """{{ if .System }}{{.System}}
+    {{ end }}{{ .Prompt }}"""
+
+    PARAMETER temperature 0.7
+    PARAMETER top_p 0.9
+    PARAMETER top_k 40
+    PARAMETER stop "</s>"
+    PARAMETER num_ctx 2048
