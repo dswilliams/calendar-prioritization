@@ -56,8 +56,8 @@ To connect to the Google Calendar API, you need to create a project in the Googl
 
         *   **macOS/Linux (in your terminal):**
             ```bash
-            export GOOGLE_CLIENT_ID="980348550877-2etdnl8cdd08a4rsueq75qrvvsi2e0as.apps.googleusercontent.com"
-            export GOOGLE_CLIENT_SECRET="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"
+            export GOOGLE_CLIENT_ID="YOUR_CLIENT_ID"
+            export GOOGLE_CLIENT_SECRET="YOUR_CLIENT_SECRET"
             ```
             (Replace `YOUR_CLIENT_ID` and `YOUR_CLIENT_SECRET` with the actual values.)
             **Note:** These settings will only last for the current terminal session. To make them permanent, you'll need to add these lines to your shell configuration file (e.g., `~/.bashrc`, `~/.zshrc`).
