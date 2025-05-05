@@ -40,6 +40,8 @@
 - Implemented the function to call the Ollama API
 - Removed Google Gemini API and related code
 - Updated the backend to use Ollama for LLM functionality
+- Added userinfo.email and userinfo.profile scopes to OAuth flow
+- Updated prompt to include user's name and improve formatting
 
 ### User Feedback Integration and Its Impact on Development
 - N/A (initial project setup)

@@ -13,3 +13,5 @@
 - Implementing basic calendar read functionality for Google Calendar (current week)
 
 ### Next Steps
+- Implement Microsoft Calendar integration
+- Store the status of the connection and/or check each time we read the calendar

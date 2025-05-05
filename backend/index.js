@@ -133,6 +133,13 @@ app.get('/auth/google/callback', async (req, res) => {
       secure: process.env.NODE_ENV === 'production'
     });
 
+    // Set connection status cookie
+    res.cookie('google_calendar_connected', 'true', {
+      maxAge: 3600000, // 1 hour
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production'
+    });
+
     res.redirect('http://localhost:5173?auth=success');
   } catch (error) {
     console.error('Error exchanging code for tokens:', error);
@@ -147,6 +154,11 @@ app.get('/', (req, res) => {
 // Calendar API endpoint
 app.get('/api/calendar', async (req, res) => {
   try {
+    // Check if we have the connection status cookie
+    if (!req.cookies.google_calendar_connected) {
+      return res.status(401).json({ message: 'Not connected to Google Calendar' });
+    }
+
     // Check if we have auth tokens
     if (!oauth2Client.credentials || Object.keys(oauth2Client.credentials).length === 0) {
       return res.status(401).json({ message: 'Not authenticated with Google Calendar' });

@@ -14,8 +14,8 @@
 ### Key Features
 - [x] User authentication and authorization (Google Calendar Implemented)
 - [x] Calendar integration (Google Calendar Implemented)
-- [ ] LLM-based event prioritization
-- [ ] Issue flagging (missing agenda, no response, conflicts)
+- [x] LLM-based event prioritization
+- [x] Issue flagging (missing agenda, no response, conflicts)
 - [ ] User-friendly UI with clear presentation of prioritized events and issues
 - [ ] "Productive Sass" personality in UI and error messages
 

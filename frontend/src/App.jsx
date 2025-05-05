@@ -77,19 +77,21 @@ function App() {
       </div>
       <h1>Calendar Prioritizer</h1>
       
-      {authStatus === 'success' && (
+      {authStatus === 'success' ? (
         <div className="auth-status success">
-          <p>Authentication successful! Your calendar data is being analyzed.</p>
+          <p>Connected to Google Calendar!</p>
+          {prioritizedData && !isLoading && (
+            <div className="prioritized-data">
+              <h2>Your Prioritized Calendar</h2>
+              <pre>{prioritizedData}</pre>
+            </div>
+          )}
         </div>
-      )}
-      
-      {authStatus === 'error' && (
+      ) : authStatus === 'error' ? (
         <div className="auth-status error">
           <p>Authentication failed. Please try again.</p>
         </div>
-      )}
-      
-      {!authStatus && (
+      ) : (
         <div className="auth-prompt">
           <p>Please connect your calendar to get started.</p>
           <a href="http://localhost:5001/auth/google" className="connect-button">
@@ -104,13 +106,6 @@ function App() {
         <div className="error-message">
           <p>Error: {error}</p>
           <p>Please try refreshing the page or reconnecting your calendar.</p>
-        </div>
-      )}
-      
-      {prioritizedData && !isLoading && (
-        <div className="prioritized-data">
-          <h2>Your Prioritized Calendar</h2>
-          <pre>{prioritizedData}</pre>
         </div>
       )}
       
