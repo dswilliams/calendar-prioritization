@@ -207,7 +207,7 @@ app.get('/api/calendar', async (req, res) => {
 Based on these upcoming calendar events, rank the top 3 most important meetings this week and flag any calendar issues.
 
 Prioritization Criteria:
-- Urgency: Events happening today or tomorrow are likely more important, unless they are weighed down by the other prioritization criteria
+- Urgency: Events happening today or tomorrow are likely more important, unless they are weighed down by the other prioritization criteria. The current date is May 5, 2025.
 - Ownership: Events where the user is the organizer carry more weight
 - Meeting purpose: Meetings with clear agendas/descriptions are more important 
 - Attendee count: Consider both small focused meetings and large meetings where the user is presenting
