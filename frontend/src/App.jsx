@@ -67,7 +67,7 @@ function App() {
   }, []); // Empty dependency array ensures this only runs once on mount
 
   return (
-    <>
+    <div className="bg-background">
       <div>
         <a href="https://vite.dev" target="_blank" rel="noreferrer">
           <img src={viteLogo} className="logo" alt="Vite logo" />
@@ -128,7 +128,7 @@ function App() {
           </ul>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
