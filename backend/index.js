@@ -21,7 +21,8 @@ app.use(express.urlencoded({ extended: true }));
 
 const scopes = [
   'https://www.googleapis.com/auth/calendar.readonly',
-  'https://www.googleapis.com/auth/userinfo.email'
+  'https://www.googleapis.com/auth/userinfo.email',
+  'https://www.googleapis.com/auth/userinfo.profile'
 ];
 
 const oauth2Client = new google.auth.OAuth2(
