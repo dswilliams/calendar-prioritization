@@ -6,65 +6,128 @@ import './App.css';
 function App() {
   const [authStatus, setAuthStatus] = useState(null);
   const [events, setEvents] = useState([]);
-  let auth;
+  const [prioritizedData, setPrioritizedData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Get authentication status from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    let auth = urlParams.get('auth');
+    const authParam = urlParams.get('auth');
 
-    if (auth === 'success') {
+    // Update auth status based on URL parameter
+    if (authParam === 'success') {
       setAuthStatus('success');
-    } else if (auth === 'error') {
+      
+      // Fetch calendar events only when auth is successful
+      const fetchCalendarEvents = async () => {
+        setIsLoading(true);
+        setError(null);
+        
+        try {
+          const response = await fetch('http://localhost:5001/api/calendar', {
+            credentials: 'include' // Include credentials for cross-origin requests
+          });
+          
+          if (!response.ok) {
+            throw new Error(`API responded with status: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          console.log('Calendar data received:', data);
+          
+          // Check if the data is a string (raw LLM response)
+          if (typeof data === 'string') {
+            setPrioritizedData(data);
+          } else {
+            // If it's structured data
+            setEvents(data);
+          }
+          
+        } catch (error) {
+          console.error('Error fetching calendar events:', error);
+          setError(error.message);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      fetchCalendarEvents();
+    } else if (authParam === 'error') {
       setAuthStatus('error');
     }
-
-    const fetchCalendarEvents = async () => {
-      try {
-        const response = await fetch('http://localhost:5001/api/calendar');
-        const data = await response.json();
-        setEvents(data);
-      } catch (error) {
-        console.error('Error fetching calendar events:', error);
-      }
-    };
-
-    if (auth === 'success') {
-      fetchCalendarEvents();
-    } 
-  }, [auth]);
+    
+    // Clean up URL parameters after processing
+    if (authParam) {
+      const url = new URL(window.location);
+      url.searchParams.delete('auth');
+      window.history.replaceState({}, '', url);
+    }
+  }, []); // Empty dependency array ensures this only runs once on mount
 
   return (
     <>
       <div>
-        <a href="https://vite.dev" target="_blank">
+        <a href="https://vite.dev" target="_blank" rel="noreferrer">
           <img src={viteLogo} className="logo" alt="Vite logo" />
         </a>
-        <a href="https://react.dev" target="_blank">
+        <a href="https://react.dev" target="_blank" rel="noreferrer">
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1>Vite + React</h1>
+      <h1>Calendar Prioritizer</h1>
+      
       {authStatus === 'success' && (
-        <p>Authentication successful!</p>
+        <div className="auth-status success">
+          <p>Authentication successful! Your calendar data is being analyzed.</p>
+        </div>
       )}
+      
       {authStatus === 'error' && (
-        <p>Authentication failed.</p>
+        <div className="auth-status error">
+          <p>Authentication failed. Please try again.</p>
+        </div>
       )}
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-      <a href="http://localhost:5001/auth/google">Connect to Google Calendar</a>
-
-      <h2>Calendar Events</h2>
-      <ul>
-        {events.map(event => (
-          <li key={event.id}>
-            {event.summary} - {event.start.dateTime || event.start.date}
-          </li>
-        ))}
-      </ul>
+      
+      {!authStatus && (
+        <div className="auth-prompt">
+          <p>Please connect your calendar to get started.</p>
+          <a href="http://localhost:5001/auth/google" className="connect-button">
+            Connect to Google Calendar
+          </a>
+        </div>
+      )}
+      
+      {isLoading && <p>Loading your calendar data...</p>}
+      
+      {error && (
+        <div className="error-message">
+          <p>Error: {error}</p>
+          <p>Please try refreshing the page or reconnecting your calendar.</p>
+        </div>
+      )}
+      
+      {prioritizedData && !isLoading && (
+        <div className="prioritized-data">
+          <h2>Your Prioritized Calendar</h2>
+          <pre>{prioritizedData}</pre>
+        </div>
+      )}
+      
+      {events.length > 0 && !prioritizedData && !isLoading && (
+        <div className="events-list">
+          <h2>Calendar Events</h2>
+          <ul>
+            {events.map((event, index) => (
+              <li key={event.id || index}>
+                {event.summary} - {event.start?.dateTime || event.start?.date || 'No date'}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </>
-  )
+  );
 }
 
 export default App;
