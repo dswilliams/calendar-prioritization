@@ -195,7 +195,7 @@ app.get('/api/calendar', async (req, res) => {
 Based on these upcoming calendar events, rank the top 3 most important meetings this week and flag any calendar issues.
 
 Prioritization Criteria:
-- Urgency: Events happening today or tomorrow are likely more important
+- Urgency: Events happening today or tomorrow are likely more important, unless they are weighed down by the other prioritization criteria
 - Ownership: Events where the user is the organizer carry more weight
 - Meeting purpose: Meetings with clear agendas/descriptions are more important 
 - Attendee count: Consider both small focused meetings and large meetings where the user is presenting
@@ -211,9 +211,9 @@ ${formattedEvents}
 
 Format your response with:
 1. A brief, sassy intro (1-2 sentences)
-2. TOP PRIORITY MEETINGS (numbered 1-3) with a short explanation (2-3 sentences max) for each
+2. TOP PRIORITY MEETINGS (numbered 1-3) with a short explanation (2-3 sentences max) for each explaining why each one is important
 3. FLAGGED ISSUES (if any)
-4. A brief conclusion with actionable advice`;
+4. Actionable advice that the user can take to prepare for each of these meetings`;
 
     try {
       // Call the Ollama API with proper error handling
