@@ -232,6 +232,9 @@ Format your response with:
       const ollamaResponse = await callOllamaAPI(prompt);
       console.log('Ollama response received, length:', ollamaResponse.length);
       
+      // Log the complete Ollama API response
+      console.log('Complete Ollama API response:', ollamaResponse);
+
       // Return the formatted response directly to the client
       res.json(ollamaResponse);
     } catch (error) {
