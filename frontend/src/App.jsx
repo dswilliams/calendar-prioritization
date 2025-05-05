@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
+import { motion } from 'framer-motion';
 import './App.css';
 
 function App() {
@@ -75,7 +76,13 @@ function App() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1>Calendar Prioritizer</h1>
+      <motion.h1
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1 }}
+      >
+        Calendar Prioritizer
+      </motion.h1>
       
       {authStatus === 'success' ? (
         <div className="auth-status success">

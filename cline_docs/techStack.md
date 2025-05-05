@@ -3,7 +3,7 @@
 ### Frontend
 - **Framework:** React
 - **Styling:** Tailwind CSS
-- **Animations:** Framer Motion (potential)
+- **Animations:** Framer Motion
 
 ### Backend
 - **Language:** Node.js
