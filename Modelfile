@@ -1,4 +1,4 @@
-FROM ./mistral-7b-instruct-v0.1.Q4_K_M.gguf
+FROM mistral:7b-instruct-v0.2-q8_0
 
     TEMPLATE """{{ if .System }}{{.System}}
     {{ end }}{{ .Prompt }}"""

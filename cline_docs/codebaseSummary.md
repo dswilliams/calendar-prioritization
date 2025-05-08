@@ -14,12 +14,12 @@
 4. Backend formats data and sends it to the Ollama API.
 5. Ollama API returns prioritized events and explanations.
 6. Backend formats the response and sends it to the Frontend.
-7. Frontend displays the results to the user.
+7. Frontend parses and displays the structured results to the user.
 
 ### External Dependencies
 - React
 - Tailwind CSS
-- Framer Motion (potential)
+- Framer Motion
 - Node.js
 - Express.js
 - cookie-parser
@@ -42,10 +42,17 @@
 - Updated the backend to use Ollama for LLM functionality
 - Added userinfo.email and userinfo.profile scopes to OAuth flow
 - Updated prompt to include user's name and improve formatting
+- Fixed backend issues with formatCalendarEvent function
+- Enhanced frontend UI with Tailwind CSS for better user experience
+- Implemented LLM response parsing to display structured data
+- Added refresh button functionality to fetch updated calendar data
+- Improved loading states and error handling in the frontend
+- Simplified CSS by leveraging Tailwind for most styling needs
 
 ### User Feedback Integration and Its Impact on Development
 - N/A (initial project setup)
 - Successfully implemented Google Calendar OAuth 2.0 authentication and basic calendar read functionality.
+- Improved UI based on best practices for displaying prioritized calendar data
 
 ### Additional Documentation
 - N/A

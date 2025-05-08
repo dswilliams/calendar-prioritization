@@ -77,30 +77,22 @@ async function callOllamaAPI(prompt) {
   }
 }
 
-function formatCalendarEvent(event, userEmail) {
+function formatCalendarEvent(event) {
   const startTime = event.start.dateTime || event.start.date;
   const endTime = event.end.dateTime || event.end.date;
   const date = new Date(startTime).toLocaleDateString();
   const organizerName = event.organizer?.displayName || event.organizer?.email || 'Unknown';
   const attendeesCount = event.attendees ? event.attendees.length : 0;
-  const description = event.description || 'None';
-  const location = event.location || 'None';
-  const isUserOrganizer = event.organizer?.email === userEmail;
-  
-  // Find user's response status
-  let responseStatus = 'No Response';
-  if (event.attendees) {
-    const userAttendee = event.attendees.find(attendee => attendee.email === userEmail);
-    if (userAttendee) {
-      responseStatus = userAttendee.responseStatus;
-    }
+  let description = event.description || 'None';
+  if (description && description.split(' ').length > 100) {
+    description = description.split(' ').slice(0, 100).join(' ') + '...';
   }
+  const location = event.location || 'None';
 
   return `Title: ${event.summary || 'Untitled'}
 Time: ${startTime} - ${endTime}, ${date}
-Organizer: ${organizerName} / is_user_organizer: ${isUserOrganizer}
+Organizer: ${organizerName}
 Attendees: ${attendeesCount} people
-Response Status: ${responseStatus}
 Description: ${description}
 Location: ${location}`;
 }
@@ -198,20 +190,30 @@ app.get('/api/calendar', async (req, res) => {
     const eventList = events.data.items;
     console.log('Found', eventList.length, 'events');
 
+    // Limit the number of events to 20
+    const limitedEventList = eventList.slice(0, 20);
+
     // Format the calendar events for the LLM
-    const formattedEvents = eventList.map(event => formatCalendarEvent(event, userEmail)).join('\n\n---\n\n');
+    const formattedEvents = limitedEventList.map(event => formatCalendarEvent(event)).join('\n\n---\n\n');
 
     // Construct the prompt for the LLM
-    const prompt = `You are a productivity assistant designed to help users focus on what truly matters in their calendars. You have a "productive sass" personality - direct, competent, and with a hint of deadpan charm, like a really competent barista who casually fixes emotional baggage while handing out espresso. Be concise, professional, but with a bit of sass.
+    const prompt = `You are an impact focussed assistant designed to help users focus on what truly matters in their calendars. You have a "productive sass" personality - direct, competent, and with a hint of deadpan charm, like a really competent barista who casually fixes emotional baggage while handing out espresso. Be concise, professional, but with a bit of sass.
 
 Based on these upcoming calendar events, rank the top 3 most important meetings this week and flag any calendar issues.
 
+Key input data:
+- The current date is May 8, 2025
+- You do NOT have a name. You are an impact assistant.
+- You are expected to read all the details of a calendar event, take steps to deeply understand what purpose it has and what impact it could have on me.
+- Importance Weightings exist fore ach Prioritization Criteria and are an internal mechanism to help with determining potential impact that a meeting could have. Do not expose this score to the user.
+
 Prioritization Criteria:
-- Urgency: Events happening today or tomorrow are likely more important, unless they are weighed down by the other prioritization criteria. The current date is May 5, 2025.
-- Ownership: Events where the user is the organizer carry more weight
-- Meeting purpose: Meetings with clear agendas/descriptions are more important 
-- Attendee count: Consider both small focused meetings and large meetings where the user is presenting
-- Lower priority signals: Daily standups, commute blocks, routine 1:1s with no agenda
+- Urgency: Events happening today or tomorrow get an Importance Weighting of 80/100. All other meetings get an importance weighting of 50/100.
+- Ownership: Importance Weighting: 90/100. Events where the user is the organizer are likely important.
+- Single Person Meetings: Importance Weighting: 0/100. Meetings where the user is the organizer and no invitees, are NOT important.
+- Meeting purpose: Meetings without a description get an Importance Weighting of 33/100. Meetings with a description get an Importance Weighting determined by you based on the purpose and potential impact that the meeting could have.
+- Attendee count: Meetings with >20 people get an Importance Weighting of 0/100. Meetings with <10 people get an importance weighting of 75/100. All other meetings get an Importance Weighting of 50/100. Add 25 points if the user is the organizer.
+- Lower priority signals: Daily standups, commute blocks, routine 1:1s with no agenda. These get an importance weighting of 10/100.
 
 Calendar Issues to Flag:
 - Important meetings missing agendas/descriptions
@@ -222,6 +224,7 @@ Calendar Events:
 ${formattedEvents}
 
 Format your response with:
+0. A step by Step thought process that you went through to produce your response.
 1. A brief, sassy intro (1-2 sentences)
 2. TOP PRIORITY MEETINGS (numbered 1-3) with a short explanation (2-3 sentences max) for each explaining why each one is important
 3. FLAGGED ISSUES (if any)
