@@ -49,28 +49,52 @@ async function callOllamaAPI(prompt) {
     // Update last call time
     lastOllamaCall = Date.now();
     
-    const response = await fetch('http://localhost:11434/api/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        prompt: prompt,
-        model: 'calendar-prioritizer',
-        stream: false
-      })
-    });
+    // Check if Ollama API is available
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Ollama API error response:', errorText);
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch('http://localhost:11434/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prompt: prompt,
+          model: 'calendar-prioritizer',
+          stream: false
+        }),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Ollama API error response:', errorText);
+        
+        // Check for specific error types
+        if (response.status === 404) {
+          throw new Error('Model not found. Please make sure the calendar-prioritizer model is available in Ollama.');
+        } else if (response.status === 500) {
+          throw new Error('Ollama server error. Please check the Ollama server logs for more information.');
+        } else {
+          throw new Error(`Ollama API error: ${response.status} - ${errorText || 'Unknown error'}`);
+        }
+      }
+
+      const data = await response.json();
+      console.log('Ollama API response received');
+      
+      return data.response; // Return just the response text
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Ollama API request timed out. Please check if the Ollama server is running.');
+      } else if (error.code === 'ECONNREFUSED' || error.message.includes('Failed to fetch')) {
+        throw new Error('Could not connect to Ollama API. Please make sure the Ollama server is running at http://localhost:11434.');
+      }
+      throw error;
     }
-
-    const data = await response.json();
-    console.log('Ollama API response received');
-    
-    return data.response; // Return just the response text
   } catch (error) {
     console.error('Error calling Ollama API:', error);
     throw error;
@@ -82,19 +106,58 @@ function formatCalendarEvent(event) {
   const endTime = event.end.dateTime || event.end.date;
   const date = new Date(startTime).toLocaleDateString();
   const organizerName = event.organizer?.displayName || event.organizer?.email || 'Unknown';
-  const attendeesCount = event.attendees ? event.attendees.length : 0;
+  
+  // Get attendee details
+  let attendeesCount = 0;
+  let attendeesList = '';
+  if (event.attendees && event.attendees.length > 0) {
+    attendeesCount = event.attendees.length;
+    // Get up to 5 attendees for the LLM to consider
+    const limitedAttendees = event.attendees.slice(0, 5);
+    attendeesList = limitedAttendees.map(attendee => {
+      const name = attendee.displayName || attendee.email || 'Unknown';
+      const responseStatus = attendee.responseStatus || 'Unknown';
+      return `${name} (${responseStatus})`;
+    }).join(', ');
+    
+    if (event.attendees.length > 5) {
+      attendeesList += `, and ${event.attendees.length - 5} more`;
+    }
+  }
+  
+  // Format description
   let description = event.description || 'None';
   if (description && description.split(' ').length > 100) {
     description = description.split(' ').slice(0, 100).join(' ') + '...';
   }
+  
+  // Get location and conference details
   const location = event.location || 'None';
+  let conferenceData = 'None';
+  if (event.conferenceData && event.conferenceData.conferenceId) {
+    conferenceData = `Conference ID: ${event.conferenceData.conferenceId}`;
+    if (event.conferenceData.conferenceSolution && event.conferenceData.conferenceSolution.name) {
+      conferenceData += ` (${event.conferenceData.conferenceSolution.name})`;
+    }
+  }
+  
+  // Get recurrence information
+  const isRecurring = event.recurringEventId ? 'Yes' : 'No';
+  
+  // Get creation and update times
+  const created = event.created ? new Date(event.created).toLocaleString() : 'Unknown';
+  const updated = event.updated ? new Date(event.updated).toLocaleString() : 'Unknown';
 
   return `Title: ${event.summary || 'Untitled'}
 Time: ${startTime} - ${endTime}, ${date}
 Organizer: ${organizerName}
-Attendees: ${attendeesCount} people
+Attendees: ${attendeesCount} people${attendeesList ? ` (${attendeesList})` : ''}
 Description: ${description}
-Location: ${location}`;
+Location: ${location}
+Conference Data: ${conferenceData}
+Recurring: ${isRecurring}
+Created: ${created}
+Last Updated: ${updated}`;
 }
 
 // Google OAuth route
@@ -146,16 +209,43 @@ app.get('/', (req, res) => {
 // Calendar API endpoint
 app.get('/api/calendar', async (req, res) => {
   try {
-    // Check if we have the connection status cookie
-    if (!req.cookies.google_calendar_connected) {
-      return res.status(401).json({ message: 'Not connected to Google Calendar' });
-    }
+    // Check if we have auth tokens in cookies
+    const googleAuthCookie = req.cookies.google_auth;
 
-    // Check if we have auth tokens
-    if (!oauth2Client.credentials || Object.keys(oauth2Client.credentials).length === 0) {
+    if (!googleAuthCookie) {
+      console.log('No google_auth cookie found');
       return res.status(401).json({ message: 'Not authenticated with Google Calendar' });
     }
-    
+
+    let tokens;
+    try {
+      tokens = JSON.parse(googleAuthCookie);
+    } catch (error) {
+      console.error('Error parsing google_auth cookie:', error);
+      return res.status(401).json({ message: 'Invalid Google Calendar authentication data' });
+    }
+
+    oauth2Client.setCredentials(tokens);
+
+    // Check if the tokens are expired
+    if (oauth2Client.isTokenExpiring()) {
+      console.log('Google token expiring, refreshing token');
+      try {
+        const { tokens: refreshedTokens } = await oauth2Client.refreshAccessToken();
+        oauth2Client.setCredentials(refreshedTokens);
+
+        // Store refreshed tokens in cookie
+        res.cookie('google_auth', JSON.stringify(refreshedTokens), {
+          maxAge: 3600000, // 1 hour
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production'
+        });
+      } catch (error) {
+        console.error('Error refreshing access token:', error);
+        return res.status(401).json({ message: 'Failed to refresh Google Calendar access token' });
+      }
+    }
+
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
     // Get user email for checking if they're the organizer
@@ -197,38 +287,35 @@ app.get('/api/calendar', async (req, res) => {
     const formattedEvents = limitedEventList.map(event => formatCalendarEvent(event)).join('\n\n---\n\n');
 
     // Construct the prompt for the LLM
-    const prompt = `You are an impact focussed assistant designed to help users focus on what truly matters in their calendars. You have a "productive sass" personality - direct, competent, and with a hint of deadpan charm, like a really competent barista who casually fixes emotional baggage while handing out espresso. Be concise, professional, but with a bit of sass.
+    const prompt = `You are an impact-focused assistant designed to help users prioritize their calendar. You have a "productive sass" personality - direct, competent, and with deadpan charm. Be concise and professional.
 
-Based on these upcoming calendar events, rank the top 3 most important meetings this week and flag any calendar issues.
+Based on these upcoming calendar events, rank the top 3 most important meetings this week and then flag all calendar issues.
 
 Key input data:
-- The current date is May 8, 2025
-- You do NOT have a name. You are an impact assistant.
-- You are expected to read all the details of a calendar event, take steps to deeply understand what purpose it has and what impact it could have on me.
-- Importance Weightings exist fore ach Prioritization Criteria and are an internal mechanism to help with determining potential impact that a meeting could have. Do not expose this score to the user.
+- The current date is May 9, 2025
+- Analyze the the purpose and potential impact of each event.
 
 Prioritization Criteria:
-- Urgency: Events happening today or tomorrow get an Importance Weighting of 80/100. All other meetings get an importance weighting of 50/100.
-- Ownership: Importance Weighting: 90/100. Events where the user is the organizer are likely important.
-- Single Person Meetings: Importance Weighting: 0/100. Meetings where the user is the organizer and no invitees, are NOT important.
-- Meeting purpose: Meetings without a description get an Importance Weighting of 33/100. Meetings with a description get an Importance Weighting determined by you based on the purpose and potential impact that the meeting could have.
-- Attendee count: Meetings with >20 people get an Importance Weighting of 0/100. Meetings with <10 people get an importance weighting of 75/100. All other meetings get an Importance Weighting of 50/100. Add 25 points if the user is the organizer.
-- Lower priority signals: Daily standups, commute blocks, routine 1:1s with no agenda. These get an importance weighting of 10/100.
+- Urgency: Today/tomorrow = high importance.
+- Ownership: User is the organizer = high importance.
+- User is the organizer with no invitees = NOT important.
+- Meeting purpose: Description indicates high impact, but the content matters more.
+- Attendee count: Fewer attendees = higher importance when user is the organizer. Half as important if they are not the organizer.
+- Lower priority signals: Daily standups, commute blocks, routine 1:1s with no agenda.
 
 Calendar Issues to Flag:
 - Important meetings missing agendas/descriptions
 - Meetings the user hasn't responded to yet
-- Meeting conflicts (overlapping times)
+- Meeting conflicts
 
 Calendar Events:
 ${formattedEvents}
 
 Format your response with:
-0. A step by Step thought process that you went through to produce your response.
-1. A brief, sassy intro (1-2 sentences)
-2. TOP PRIORITY MEETINGS (numbered 1-3) with a short explanation (2-3 sentences max) for each explaining why each one is important
+1. A brief, sassy intro (1 sentence)
+2. TOP PRIORITY MEETINGS (numbered 1-3) with a short explanation (2-3 sentences max) for each.
 3. FLAGGED ISSUES (if any)
-4. Actionable advice that the user can take to prepare for each of these meetings`;
+4. Actionable advice.`;
 
     try {
       // Call the Ollama API with proper error handling

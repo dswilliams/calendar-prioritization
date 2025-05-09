@@ -137,7 +137,15 @@ function App() {
       });
       
       if (!response.ok) {
-        throw new Error(`API responded with status: ${response.status}`);
+        // Handle authentication errors specifically
+        if (response.status === 401) {
+          // Clear the connection status cookie
+          document.cookie = 'google_calendar_connected=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+          setAuthStatus(null);
+          throw new Error('Your Google Calendar connection has expired or been revoked. Please reconnect.');
+        } else {
+          throw new Error(`API responded with status: ${response.status}`);
+        }
       }
       
       const data = await response.json();
@@ -149,6 +157,9 @@ function App() {
         const parsed = parseResponse(data);
         setParsedResponse(parsed);
         console.log('Parsed response:', parsed);
+      } else if (data.message) {
+        // Handle error messages from the API
+        throw new Error(data.message);
       } else {
         // If it's structured data
         setEvents(data);
@@ -318,12 +329,20 @@ function App() {
         ) : (
           <div className="bg-white rounded-lg shadow-lg p-8 text-center">
             <p className="text-gray-700 mb-6">Please connect your calendar to get started.</p>
-            <a 
-              href="http://localhost:5001/auth/google" 
-              className="inline-block bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-md text-lg font-medium transition-colors"
+            <a
+              href="http://localhost:5001/auth/google"
+              className="inline-block bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-md text-lg font-medium transition-colors disabled:opacity-50"
+              disabled={isLoading}
             >
-              Connect to Google Calendar
+              {isLoading ? 'Connecting...' : 'Connect to Google Calendar'}
             </a>
+          </div>
+        )}
+
+        {isLoading && authStatus !== 'success' && (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <p className="ml-4 text-gray-600">Connecting to Google Calendar...</p>
           </div>
         )}
         
