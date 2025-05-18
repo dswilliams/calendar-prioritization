@@ -7,6 +7,7 @@
 - [ ] Implement Microsoft Calendar integration (deprioritized for now)
 - [x] Store the status of the connection and/or check each time we read the calendar
 - [ ] UI/UX: Implement slow moving animations and a scientific, yet approachable feel to the front end
+- [x] Implement user memory system for personalized calendar prioritization
 
 ### Key Features
 - [x] User authentication and authorization (Google Calendar Implemented)
@@ -15,6 +16,8 @@
 - [x] Issue flagging (missing agenda, no response, conflicts)
 - [x] User-friendly UI with clear presentation of prioritized events and issues
 - [x] "Productive Sass" personality in UI and error messages
+- [x] User memory system to store personal information, relationships, goals, and preferences
+- [ ] Auto-update of user memory based on feedback interactions
 
 ### Completion Criteria
 - [ ] All key features are implemented and functional
@@ -23,6 +26,7 @@
 - [x] Potential calendar issues are correctly identified and flagged
 - [x] The UI is intuitive and easy to use
 - [x] The "Productive Sass" personality is consistently applied throughout the application
+- [x] User memory is effectively used to personalize calendar prioritization
 - [ ] The application is thoroughly tested and documented
 
 ### Completed Tasks
@@ -37,3 +41,7 @@
 - Enhanced calendar event formatting with more detailed information
 - Improved error handling in the frontend for authentication issues
 - Prevented calendar data from being fetched on every page refresh
+- Implemented user memory system with persistent storage (user_memory.json)
+- Created API endpoints for user memory operations (GET, POST, PUT)
+- Developed UserProfile component for managing user information
+- Integrated user memory with calendar prioritization for personalized results

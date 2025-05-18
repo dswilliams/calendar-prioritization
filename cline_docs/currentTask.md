@@ -25,6 +25,11 @@
     - Add conference data information
     - Include recurrence information
     - Add creation and update times
+- Implement user memory system - Implemented and tested successfully!
+    - Create user_memory.json for persistent storage
+    - Implement API endpoints for user memory operations (GET, POST, PUT)
+    - Create UserProfile component for managing user information
+    - Integrate user memory with calendar prioritization
 
 ### Context
 - Following the project roadmap and the agreed-upon tech stack (React, Node.js/Express)
@@ -32,7 +37,9 @@
 - Implementing basic calendar read functionality for Google Calendar (current week)
 - Using Ollama API with a custom model for calendar prioritization
 - Implementing a user-friendly UI with Tailwind CSS
+- Implementing a user memory system to store and use personal information for better prioritization
 
 ### Next Steps
 - Add loading states and animations for better user experience
+- Implement auto-update of user memory based on feedback interactions
 - Implement Microsoft Calendar integration (deprioritized for now)

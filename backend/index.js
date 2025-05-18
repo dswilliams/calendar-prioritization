@@ -3,6 +3,24 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { google } = require('googleapis');
+const fs = require('fs');
+const defaultUserMemory = require('./defaultUserMemory');
+
+// Load user memory from file or initialize with defaults
+let userMemory = { ...defaultUserMemory };
+try {
+  if (fs.existsSync('user_memory.json')) {
+    const data = fs.readFileSync('user_memory.json', 'utf8');
+    userMemory = JSON.parse(data);
+  } else {
+    // Create the file with default values if it doesn't exist
+    fs.writeFileSync('user_memory.json', JSON.stringify(defaultUserMemory, null, 2));
+    console.log("Created user_memory.json with default values");
+  }
+} catch (err) {
+  console.error("Error reading/writing user_memory.json:", err);
+}
+
 console.log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID);
 console.log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET);
 
@@ -31,6 +49,33 @@ const oauth2Client = new google.auth.OAuth2(
   'http://localhost:5001/auth/google/callback'
 );
 
+// User API endpoints
+app.get('/api/user', (req, res) => {
+  res.json(userMemory);
+});
+
+app.post('/api/user', (req, res) => {
+  userMemory = req.body;
+  fs.writeFile('user_memory.json', JSON.stringify(userMemory, null, 2), (err) => {
+    if (err) {
+      console.error("Error writing user_memory.json:", err);
+      return res.status(500).json({ message: "Error saving user data" });
+    }
+    res.json({ message: "User data saved successfully" });
+  });
+});
+
+app.put('/api/user', (req, res) => {
+  userMemory = req.body;
+  fs.writeFile('user_memory.json', JSON.stringify(userMemory, null, 2), (err) => {
+    if (err) {
+      console.error("Error writing user_memory.json:", err);
+      return res.status(500).json({ message: "Error updating user data" });
+    }
+    res.json({ message: "User data saved successfully" });
+  });
+});
+
 // Rate limiter for Ollama API to prevent overloading
 let lastOllamaCall = 0;
 const OLLAMA_RATE_LIMIT_MS = 500; // 500ms between calls
@@ -43,16 +88,16 @@ async function callOllamaAPI(prompt) {
     if (timeElapsed < OLLAMA_RATE_LIMIT_MS) {
       await new Promise(resolve => setTimeout(resolve, OLLAMA_RATE_LIMIT_MS - timeElapsed));
     }
-    
+
     console.log('Calling Ollama API with prompt length:', prompt.length);
-    
+
     // Update last call time
     lastOllamaCall = Date.now();
-    
+
     // Check if Ollama API is available
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
       const response = await fetch('http://localhost:11434/api/generate', {
         method: 'POST',
@@ -66,13 +111,13 @@ async function callOllamaAPI(prompt) {
         }),
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Ollama API error response:', errorText);
-        
+
         // Check for specific error types
         if (response.status === 404) {
           throw new Error('Model not found. Please make sure the calendar-prioritizer model is available in Ollama.');
@@ -85,7 +130,7 @@ async function callOllamaAPI(prompt) {
 
       const data = await response.json();
       console.log('Ollama API response received');
-      
+
       return data.response; // Return just the response text
     } catch (error) {
       if (error.name === 'AbortError') {
@@ -106,7 +151,7 @@ function formatCalendarEvent(event) {
   const endTime = event.end.dateTime || event.end.date;
   const date = new Date(startTime).toLocaleDateString();
   const organizerName = event.organizer?.displayName || event.organizer?.email || 'Unknown';
-  
+
   // Get attendee details
   let attendeesCount = 0;
   let attendeesList = '';
@@ -119,18 +164,18 @@ function formatCalendarEvent(event) {
       const responseStatus = attendee.responseStatus || 'Unknown';
       return `${name} (${responseStatus})`;
     }).join(', ');
-    
+
     if (event.attendees.length > 5) {
       attendeesList += `, and ${event.attendees.length - 5} more`;
     }
   }
-  
+
   // Format description
   let description = event.description || 'None';
   if (description && description.split(' ').length > 100) {
     description = description.split(' ').slice(0, 100).join(' ') + '...';
   }
-  
+
   // Get location and conference details
   const location = event.location || 'None';
   let conferenceData = 'None';
@@ -140,10 +185,10 @@ function formatCalendarEvent(event) {
       conferenceData += ` (${event.conferenceData.conferenceSolution.name})`;
     }
   }
-  
+
   // Get recurrence information
   const isRecurring = event.recurringEventId ? 'Yes' : 'No';
-  
+
   // Get creation and update times
   const created = event.created ? new Date(event.created).toLocaleString() : 'Unknown';
   const updated = event.updated ? new Date(event.updated).toLocaleString() : 'Unknown';
@@ -180,9 +225,9 @@ app.get('/auth/google/callback', async (req, res) => {
   try {
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
-    
+
     // Store tokens in cookie for future requests
-    res.cookie('google_auth', JSON.stringify(tokens), { 
+    res.cookie('google_auth', JSON.stringify(tokens), {
       maxAge: 3600000, // 1 hour
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production'
@@ -200,10 +245,6 @@ app.get('/auth/google/callback', async (req, res) => {
     console.error('Error exchanging code for tokens:', error);
     res.redirect('http://localhost:5173?auth=error&message=' + encodeURIComponent(error.message));
   }
-});
-
-app.get('/', (req, res) => {
-  res.send('Backend is running!  <a href="/auth/google">Connect to Google Calendar</a>');
 });
 
 // Calendar API endpoint
@@ -234,7 +275,7 @@ app.get('/api/calendar', async (req, res) => {
         const { tokens: refreshedTokens } = await oauth2Client.refreshAccessToken();
         oauth2Client.setCredentials(refreshedTokens);
 
-        // Store refreshed tokens in cookie
+        // Store tokens in cookie
         res.cookie('google_auth', JSON.stringify(refreshedTokens), {
           maxAge: 3600000, // 1 hour
           httpOnly: true,
@@ -286,62 +327,79 @@ app.get('/api/calendar', async (req, res) => {
     // Format the calendar events for the LLM
     const formattedEvents = limitedEventList.map(event => formatCalendarEvent(event)).join('\n\n---\n\n');
 
+    // Use current user memory data to personalize the prompt
+    // Extract user information from memory with fallbacks to defaults
+    const personalInfo = userMemory.personalInfo || defaultUserMemory.personalInfo;
+    const relationships = userMemory.relationships || defaultUserMemory.relationships;
+    const goals = userMemory.goals || defaultUserMemory.goals;
+    const meetingPreferences = userMemory.preferences?.meetingTypes || defaultUserMemory.preferences.meetingTypes;
+
+    // Format relationships for the prompt
+    const relationshipsText = relationships.map(r => `- ${r.name} (${r.relation})`).join('\n');
+    
+    // Format goals for the prompt
+    const goalsText = goals.map(g => `- ${g.description} (Priority: ${g.priority})`).join('\n');
+    
+    // Format meeting preferences for the prompt
+    const preferencesText = Object.entries(meetingPreferences)
+      .map(([type, { priority }]) => `- ${type}: ${priority} priority`)
+      .join('\n');
+
     // Construct the prompt for the LLM
     const prompt = `// # Instruction: You are an impact-focused assistant designed to help me prioritize my calendar. You have a "productive sass" personality - direct, competent, and with deadpan charm. Be concise and professional, and pushy enough as you expect me to be better than I am today.
 
 Based on these upcoming calendar events, rank the top 3 most important meetings this week and then flag all calendar issues.
 
 # About Me:
-- My name is Dan Williams
-- My son's names are Isaac & Nathan
-- My wife's name is Sara
-- I am a person who is a dad of 2 boys
-- currently unemployed and see my current job as one that 1) needs to find a new well paying job and 2) learns how to learn and code with AI, and leverage AI within the tools I build.
+- My name is ${personalInfo.name}
+- My occupation is ${personalInfo.occupation}
+- My location is ${personalInfo.location}
+
+# My Important Relationships:
+${relationshipsText}
+
+# My Goals:
+${goalsText}
+
+# My Meeting Preferences:
+${preferencesText}
 
 # Rules to abide by:
-- Most important rule is that you do not make up your own rules! 
-- Please provide a response without completing my sentence or providing your internal thoughts.
-- Assume the current date is May 11, 2025 and you are analyzing the full week of events. Every mention of an event should be relative to today's date. 
+- Assume the current date is May 18, 2025 and you are analyzing the full week of events. Every mention of an event should be relative to today's date. 
 - Analyze the the purpose and potential impact of each event.
-- Do NOT make up your own meetings. Only use the ones provided to you. Verify this before providing any output.
-- Do not use emojis in your response.
-- No swearing or offensive language.
 - Do not assume my relationship with any other person mentioned.
 
-# Prioritization Criteria:
-- Urgency: Today/tomorrow get Impact Weighting=80/100. Further out get Impact Weighting=50/100.
-- Ownership: User is the organizer get Impact Weighting= 100/100.
-- Between 1 and 10 attendees : If User is organizer get Impact Weighting=100/100. Else 75/100
-- Between 10 and 20 attendees: If User is organizer get Impact Weighting=100/100. Else 10/100.
-- More than 20 attendees: If User is organizer get Impact Weighting=100/100. Else 0/100.
-- If 0 Attendees get Impact Weight=10/100.
+# Additional Prioritization Criteria:
+- Urgency: Today/tomorrow, Impact Weighting=80/100. 
+- Ownership: User is the organizer, Impact Weighting= 80/100. 
+- Between 1 and 10 attendees : If User is organizer, Impact Weighting=100/100. If not, 40/100.
+- Between 10 and 20 attendees: If User is organizer, Impact Weighting=100/100. If not, 20/100.
+- More than 20 attendees: If User is organizer, Impact Weighting=100/100. If not, 10/100.
+- If 0 Attendees, Impact Weight=10/100.
 - Meeting purpose: Description indicates high impact, but the content matters more. Provide your own Impact Weighting score between 0 and 100. 
-- Lower priority events: Daily standups, commute blocks, routine 1:1s with no agenda. These get Impact Weighting=0/100.
-- Events that can have immediate impact are more important than events that are part of a larger goal. Example a longer running project block is less important than an event with a clear short term outcome. 
+- Lower priority events: Daily standups, commute blocks, routine 1:1s with no agenda. Impact Weighting=0/100.
+- Events that can have immediate impact are more important than events that are part of a larger goal. Example: a longer running project block is less important than an event with a clear short term outcome. 
 
 # Calendar Issues to Flag:
 - Important meetings missing agendas/descriptions
-- Meetings the user hasn't responded to yet
+- Important meetings the user hasn't responded to yet
 - Meeting conflicts
-
-# Calendar Events (${limitedEventList.length} events total):
-${formattedEvents}
 
 # Format your response with:
 - A brief, sassy intro with the tone of being my mentor/guide without saying you're my mentor/guide (1 sentence)
 - TOP PRIORITY MEETINGS (numbered 1-3) with a short explanation (1-2 sentences max) for each.
 - FLAGGED ISSUES (based on the flagging criteria, if any)
 - Motivational phrase based on the priorities ahead (1 sentence).
-- In a separate section, called Other Events, the rest of the events provided to you in the "Calendar Events" section in their priority order. Format the responses as [Title] [MM/DD HH:MM] [Reason for lower priority]. `;
+- In a separate section, called Other Events, the rest of the events provided to you in the "Calendar Events" section in their priority order. Format the responses as [Title] [MM/DD HH:MM] [Reason for lower priority]. 
 
-
-
+# Calendar Events:
+${formattedEvents}`;
 
     try {
       // Call the Ollama API with proper error handling
       const ollamaResponse = await callOllamaAPI(prompt);
       console.log('Ollama response received, length:', ollamaResponse.length);
-      
+
       // Log the complete Ollama API response
       console.log('Complete Ollama API response:', ollamaResponse);
 
@@ -352,9 +410,11 @@ ${formattedEvents}
       });
     } catch (error) {
       console.error('Error with Ollama API:', error);
+      // Still return the prompt even when there's an error
       res.status(500).json({
         message: 'Error processing calendar with LLM',
-        error: error.message
+        error: error.message,
+        prompt: prompt  // Include the prompt in the error response
       });
     }
   } catch (error) {
@@ -366,6 +426,7 @@ ${formattedEvents}
   }
 });
 
+// Start the server
 app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });

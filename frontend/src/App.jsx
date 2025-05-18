@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 import { motion } from 'framer-motion';
+import UserProfile from './components/UserProfile';
 import './App.css';
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
   const [error, setError] = useState(null);
   const [initialFetchDone, setInitialFetchDone] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [activeView, setActiveView] = useState('calendar'); // 'calendar' or 'profile'
 
   // Function to fetch calendar data
   const fetchCalendarEvents = async () => {
@@ -25,6 +27,14 @@ function App() {
       });
 
       if (!response.ok) {
+        // Parse the error response to check for a prompt
+        const errorData = await response.json();
+        
+        // If the error response includes a prompt, set it
+        if (errorData && errorData.prompt) {
+          setPrompt(errorData.prompt);
+        }
+        
         // Handle authentication errors specifically
         if (response.status === 401) {
           // Clear the connection status cookie
@@ -32,7 +42,7 @@ function App() {
           setAuthStatus(null);
           throw new Error('Your Google Calendar connection has expired or been revoked. Please reconnect.');
         } else {
-          throw new Error(`API responded with status: ${response.status}`);
+          throw new Error(errorData.message || `API responded with status: ${response.status}`);
         }
       }
 
@@ -55,6 +65,7 @@ function App() {
       setError(error.message);
     } finally {
       setIsLoading(false);
+      setShowPrompt(true);
     }
   };
 
@@ -118,12 +129,28 @@ function App() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
-          className="text-4xl font-bold text-center text-gray-800 mb-8"
+          className="text-4xl font-bold text-center text-gray-800 mb-4"
         >
           Calendar Prioritizer
         </motion.h1>
         
-        {authStatus === 'success' ? (
+        {/* Navigation Tabs */}
+        <div className="flex justify-center mb-8">
+          <button
+            onClick={() => setActiveView('calendar')}
+            className={`px-4 py-2 mx-2 rounded-md ${activeView === 'calendar' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+          >
+            Calendar
+          </button>
+          <button
+            onClick={() => setActiveView('profile')}
+            className={`px-4 py-2 mx-2 rounded-md ${activeView === 'profile' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+          >
+            User Profile
+          </button>
+        </div>
+        
+        {activeView === 'calendar' && authStatus === 'success' ? (
           <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
             <div className="flex justify-between items-center mb-6">
               <p className="text-green-600 font-semibold">Connected to Google Calendar!</p>
@@ -147,7 +174,7 @@ function App() {
               </div>
             ) : null}
           </div>
-        ) : authStatus === 'error' && !isLoading ? (
+        ) : activeView === 'calendar' && authStatus === 'error' && !isLoading ? (
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
             <p className="text-red-600 font-semibold mb-4">Authentication failed. Please try again.</p>
             <a 
@@ -157,7 +184,7 @@ function App() {
               Reconnect to Google Calendar
             </a>
           </div>
-        ) : (
+        ) : activeView === 'calendar' ? (
           <div className="bg-white rounded-lg shadow-lg p-8 text-center">
             <p className="text-gray-700 mb-6">Please connect your calendar to get started.</p>
             <a
@@ -168,9 +195,11 @@ function App() {
               {isLoading ? 'Connecting...' : 'Connect to Google Calendar'}
             </a>
           </div>
-        )}
+        ) : activeView === 'profile' ? (
+          <UserProfile />
+        ) : null}
 
-        {isLoading && authStatus === 'success' && (
+        {isLoading && authStatus === 'success' && activeView === 'calendar' && (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           </div>
@@ -184,7 +213,7 @@ function App() {
           </div>
         )}
         
-        {prompt && (
+        {(prompt || error) && (
           <div className="mt-6">
             <button
               onClick={() => setShowPrompt(!showPrompt)}
@@ -192,9 +221,14 @@ function App() {
             >
               {showPrompt ? 'Hide Prompt' : 'Show Prompt'}
             </button>
-            {showPrompt && (
+            {showPrompt && prompt && (
               <div className="bg-gray-100 border border-gray-200 rounded-lg p-6 mt-2">
                 <pre className="text-gray-700">{prompt}</pre>
+              </div>
+            )}
+            {showPrompt && !prompt && error && (
+              <div className="bg-gray-100 border border-gray-200 rounded-lg p-6 mt-2">
+                <p className="text-gray-700">No prompt available due to an error.</p>
               </div>
             )}
           </div>
