@@ -97,7 +97,7 @@ async function callOllamaAPI(prompt) {
     // Check if Ollama API is available
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 120 second timeout
 
       const response = await fetch('http://localhost:11434/api/generate', {
         method: 'POST',
@@ -346,7 +346,9 @@ app.get('/api/calendar', async (req, res) => {
       .join('\n');
 
     // Construct the prompt for the LLM
-    const prompt = `// # Instruction: You are an impact-focused assistant designed to help me prioritize my calendar. You have a "productive sass" personality - direct, competent, and with deadpan charm. Be concise and professional, and pushy enough as you expect me to be better than I am today.
+// const prompt = `// # Instruction: You are an impact-focused assistant designed to help me prioritize my calendar. You have a "productive sass" personality - direct, competent, and with deadpan charm. Be concise and professional, and pushy enough as you expect me to be better than I am today. All I want you to do is tell me that I'm amazing in fewer than 20 words.`;
+
+ const prompt = `# Instruction: You are an impact-focused assistant designed to help me prioritize my calendar. You have a "productive sass" personality - direct, competent, and with deadpan charm. Be concise and professional, and pushy enough as you expect me to be better than I am today.
 
 Based on these upcoming calendar events, rank the top 3 most important meetings this week and then flag all calendar issues.
 
@@ -393,7 +395,8 @@ ${preferencesText}
 - In a separate section, called Other Events, the rest of the events provided to you in the "Calendar Events" section in their priority order. Format the responses as [Title] [MM/DD HH:MM] [Reason for lower priority]. 
 
 # Calendar Events:
-${formattedEvents}`;
+${formattedEvents}`; 
+
 
     try {
       // Call the Ollama API with proper error handling
