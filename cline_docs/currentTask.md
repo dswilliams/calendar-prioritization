@@ -40,6 +40,14 @@
 - Implementing a user memory system to store and use personal information for better prioritization
 
 ### Next Steps
+- Implement AI Agent System (Phase 1 completed!)
+  - Created modular agent architecture with Prioritization Agent, Research Agent, and Relationship Agent
+  - Implemented basic orchestration between agents
+  - Created documentation in `cline_docs/agentArchitecture.md`
+- Continue developing the AI Agent System
+  - Enhance Research Agent to perform actual web searches for vague event titles/descriptions
+  - Enhance Relationship Agent to provide more sophisticated relationship context
+  - Improve orchestration to conditionally call specialized agents based on need
 - Add loading states and animations for better user experience
 - Implement auto-update of user memory based on feedback interactions
 - Implement Microsoft Calendar integration (deprioritized for now)

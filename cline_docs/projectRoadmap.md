@@ -8,6 +8,8 @@
 - [x] Store the status of the connection and/or check each time we read the calendar
 - [ ] UI/UX: Implement slow moving animations and a scientific, yet approachable feel to the front end
 - [x] Implement user memory system for personalized calendar prioritization
+- [x] Convert prioritization logic into a modular AI agent system (Phase 1)
+- [ ] Enhance AI agent system with specialized agents for research and relationship context
 
 ### Key Features
 - [x] User authentication and authorization (Google Calendar Implemented)
@@ -45,3 +47,9 @@
 - Created API endpoints for user memory operations (GET, POST, PUT)
 - Developed UserProfile component for managing user information
 - Integrated user memory with calendar prioritization for personalized results
+- Converted prioritization logic into a modular AI agent system (Phase 1)
+  - Created Prioritization Agent to handle core prioritization logic
+  - Created placeholder Research Agent for future web search capabilities
+  - Created placeholder Relationship Agent for future relationship context
+  - Implemented Agent Orchestrator to manage agent interactions
+  - Created comprehensive documentation in agentArchitecture.md

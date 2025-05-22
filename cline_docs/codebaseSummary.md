@@ -2,21 +2,30 @@
 
 ### Key Components and Their Interactions
 - **Frontend (React):** Handles UI, user interactions, and communication with the backend API.
-- **Backend (Node.js/Express):** Manages API endpoints, authentication (Google OAuth 2.0), calendar integration, LLM interaction, and data formatting.
+- **Backend (Node.js/Express):** Manages API endpoints, authentication (Google OAuth 2.0), calendar integration, and agent orchestration.
 - **Google Calendar API:** Fetches calendar events from Google Calendar.
 - **Microsoft Graph API:** (Not yet implemented) Fetches calendar events from Microsoft Calendar.
-- **Ollama API:** Prioritizes calendar events and generates explanations using the Mistral 7B model.
+- **AI Agent System:** Modular system for calendar prioritization and analysis:
+  - **Prioritization Agent:** Core agent that analyzes and prioritizes calendar events.
+  - **Research Agent:** (Placeholder) Will provide additional context for events through web searches.
+  - **Relationship Agent:** (Placeholder) Will provide relationship context for event attendees.
+  - **Orchestrator:** Manages the flow of information between agents.
+- **Ollama API:** Provides LLM capabilities to the Prioritization Agent using the Mistral 7B model.
 - **User Memory System:** Stores and manages user information for personalized calendar prioritization.
 
 ### Data Flow
 1. User interacts with the Frontend.
 2. Frontend sends requests to the Backend API.
 3. Backend interacts with Google Calendar API and/or Microsoft Graph API to fetch calendar events.
-4. Backend retrieves user memory data to personalize the prompt.
-5. Backend formats data and sends it to the Ollama API.
-6. Ollama API returns prioritized events and explanations.
-7. Backend formats the response and sends it to the Frontend.
-8. Frontend parses and displays the structured results to the user.
+4. Backend retrieves user memory data for personalization.
+5. Backend passes events and user data to the Agent Orchestrator.
+6. Agent Orchestrator coordinates the flow between agents:
+   - Prioritization Agent analyzes and ranks events using the Ollama API.
+   - (Future) Research Agent provides additional context for vague events.
+   - (Future) Relationship Agent provides context on attendee relationships.
+7. Agent Orchestrator aggregates results from all agents.
+8. Backend formats the response and sends it to the Frontend.
+9. Frontend parses and displays the structured results to the user.
 
 ### External Dependencies
 - React
@@ -60,6 +69,10 @@
 - Developed UserProfile component for managing user information
 - Integrated user memory with calendar prioritization for personalized results
 - Added navigation tabs to switch between calendar and user profile views
+- Refactored prioritization logic into a modular AI agent system
+- Created dedicated agent modules (prioritizationAgent.js, researchAgent.js, relationshipAgent.js)
+- Implemented Agent Orchestrator to manage agent interactions
+- Created comprehensive documentation of the agent architecture
 
 ### User Feedback Integration and Its Impact on Development
 - N/A (initial project setup)
@@ -70,4 +83,4 @@
 - Implemented user memory system to provide more personalized calendar prioritization
 
 ### Additional Documentation
-- N/A
+- [Agent Architecture](agentArchitecture.md): Outlines the structure and responsibilities of the AI agents.
