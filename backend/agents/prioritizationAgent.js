@@ -76,16 +76,16 @@ async function callOllamaAPI(prompt) {
       } else if (error.code === 'ECONNREFUSED' || error.message.includes('Failed to fetch')) {
         throw new Error('Could not connect to Ollama API. Please make sure the Ollama server is running at http://localhost:11434.');
       }
+      
+      // Re-throw the error
+      throw error;
+    }
   } catch (error) {
     console.error('Error calling Ollama API:', error);
 
     // Re-throw as a uniform Error to avoid leaking node-fetch internals
     throw new Error(`Ollama API failure: ${error.message}`);
-   }
-
-    // Re-throw as a uniform Error to avoid leaking node-fetch internals
-    throw new Error(`Ollama API failure: ${error.message}`);
-   }
+  }
 }
 
 /**

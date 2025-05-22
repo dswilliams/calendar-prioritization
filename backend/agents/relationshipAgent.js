@@ -17,14 +17,12 @@ function getRelationshipInfo(personIdentifier, userMemory) {
   console.log(`Relationship Agent: Getting relationship info for "${personIdentifier}"`);
   
   // Check if the person is in the user's relationships
-const relationship = (userMemory.relationships || []).find(r => {
-  const idLC   = personIdentifier.toLowerCase();
-  const nameLC = r.name  ? r.name.toLowerCase()  : '';
-  const mailLC = r.email ? r.email.toLowerCase() : '';
-  return nameLC === idLC || mailLC === idLC;
-});
-  return nameLC === idLC || mailLC === idLC;
-});
+  const relationship = (userMemory.relationships || []).find(r => {
+    const idLC   = personIdentifier.toLowerCase();
+    const nameLC = r.name  ? r.name.toLowerCase()  : '';
+    const mailLC = r.email ? r.email.toLowerCase() : '';
+    return nameLC === idLC || mailLC === idLC;
+  });
   
   if (relationship) {
     return {
@@ -69,19 +67,16 @@ function analyzeAttendees(attendees, userMemory, userEmail) {
   };
   
   // Process each attendee
-  const identifier = attendee.email || attendee.displayName || 'Unknown';
+  for (const attendee of attendees) {
+    const identifier = attendee.email || attendee.displayName || 'Unknown';
 
-  // Skip the user themself (prefer e-mail comparison when available)
-  if (
-    (attendee.email && attendee.email.toLowerCase() === userEmail?.toLowerCase()) ||
-    (!attendee.email && identifier.toLowerCase() === userEmail?.toLowerCase())
-  ) {
-    continue;
-  }
-    (!attendee.email && identifier.toLowerCase() === userEmail?.toLowerCase())
-  ) {
-    continue;
-  }
+    // Skip the user themself (prefer e-mail comparison when available)
+    if (
+      (attendee.email && attendee.email.toLowerCase() === userEmail?.toLowerCase()) ||
+      (!attendee.email && identifier.toLowerCase() === userEmail?.toLowerCase())
+    ) {
+      continue;
+    }
     
     // Get relationship info
     const relationshipInfo = getRelationshipInfo(identifier, userMemory);
@@ -110,6 +105,4 @@ function analyzeAttendees(attendees, userMemory, userEmail) {
 module.exports = {
   getRelationshipInfo,
   analyzeAttendees
-};
-};
 };

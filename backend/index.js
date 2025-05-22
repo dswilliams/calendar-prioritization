@@ -124,9 +124,11 @@ app.get('/auth/google/callback', async (req, res) => {
 
 // Calendar API endpoint
 app.get('/api/calendar', async (req, res) => {
+  console.log('API /api/calendar endpoint hit');
   try {
     // Check if we have auth tokens in cookies
     const googleAuthCookie = req.cookies.google_auth;
+    console.log('Cookies received:', req.cookies);
 
     if (!googleAuthCookie) {
       console.log('No google_auth cookie found');
@@ -136,6 +138,7 @@ app.get('/api/calendar', async (req, res) => {
     let tokens;
     try {
       tokens = JSON.parse(googleAuthCookie);
+      console.log('Successfully parsed auth tokens');
     } catch (error) {
       console.error('Error parsing google_auth cookie:', error);
       return res.status(401).json({ message: 'Invalid Google Calendar authentication data' });
@@ -215,6 +218,7 @@ app.get('/api/calendar', async (req, res) => {
         orchestrationResults.prioritization.response.length);
       
       // Return the results to the client
+      console.log('Sending response to client with prioritized data');
       res.json({
         response: orchestrationResults.prioritization.response,
         prompt: orchestrationResults.prioritization.prompt,
