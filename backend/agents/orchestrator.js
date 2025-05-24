@@ -47,7 +47,8 @@ async function orchestrateCalendarPrioritization(events, userMemory, userEmail, 
     const prioritizationResults = await prioritizationAgent.prioritizeEvents(
       events, 
       userMemory, 
-      userEmail
+      userEmail,
+      researchResults // Pass research results to the prioritization agent
     );
     
     // Step 5: Return the combined results

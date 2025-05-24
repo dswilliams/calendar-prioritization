@@ -46,7 +46,7 @@
   - Created documentation in `cline_docs/agentArchitecture.md`
 - Continue developing the AI Agent System
   - Enhance Research Agent to perform actual web searches for vague event titles/descriptions - Implemented and tested successfully!
-    - Created SearXNG client for web search functionality with multiple public instances
+    - Created SearXNG client for web search functionality with a self-hosted local instance
     - Implemented robust error handling and instance management
     - Added query construction logic to build effective search queries
     - Implemented result processing to extract meaningful information
@@ -54,6 +54,7 @@
     - Created comprehensive test suite
   - Enhance Relationship Agent to provide more sophisticated relationship context
   - Improve orchestration to conditionally call specialized agents based on need
+  - Enhance Research Agent output to include event details, search parameters, and impact on prioritization - Implemented and tested successfully!
 - Add loading states and animations for better user experience
 - Implement auto-update of user memory based on feedback interactions
 - Implement Microsoft Calendar integration (deprioritized for now)

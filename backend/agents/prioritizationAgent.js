@@ -159,7 +159,7 @@ Last Updated: ${updated}`;
  * @param {string} userEmail - The user's email address
  * @returns {string} - The constructed prompt
  */
-function constructPrompt(formattedEvents, userMemory, userEmail) {
+function constructPrompt(formattedEvents, userMemory, userEmail, researchMap) {
   // Extract user information from memory with fallbacks to defaults
   const personalInfo = userMemory.personalInfo || {};
   const relationships = userMemory.relationships || [];
@@ -226,7 +226,32 @@ ${preferencesText || '- None specified'}
 - In a separate section, called Other Events, the rest of the events provided to you in the "Calendar Events" section in their priority order. Format the responses as [Title] [MM/DD HH:MM] [Reason for lower priority]. 
 
 # Calendar Events:
-${formattedEvents}`;
+${formattedEvents}
+
+# Research Findings for Events:
+${limitedEventList.map(event => {
+    const research = researchMap.get(event.id);
+    if (research && research.research_conducted) {
+        const startTime = event.start.dateTime || event.start.date;
+        const endTime = event.end.dateTime || event.end.date;
+        const date = new Date(startTime).toLocaleDateString();
+        const time = new Date(startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        return `Event ID: ${event.id}
+Event Name: ${event.summary || 'Untitled'}
+Date/Time: ${date} ${time}
+Research Context Summary: ${research.context_summary}
+Inferred Event Type: ${research.event_type}
+Inferred Location: ${research.venue_info}
+Confidence Level: ${research.confidence_level}
+Search Query Used: ${research.query || 'N/A'}
+---`;
+    }
+    return '';
+}).filter(Boolean).join('\n\n')}
+
+# Impact of Research on Prioritization:
+Research findings, when available and confident, provide additional context that can influence the prioritization of events. For example, if research reveals a vague event is a critical industry conference, its priority might increase. Conversely, if research shows an event is a casual social gathering, its priority might decrease. The LLM should use this information to make more informed prioritization decisions.`;
 }
 
 /**
@@ -236,16 +261,19 @@ ${formattedEvents}`;
  * @param {string} userEmail - The user's email address
  * @returns {Promise<Object>} - The prioritized events and prompt
  */
-async function prioritizeEvents(events, userMemory, userEmail) {
+async function prioritizeEvents(events, userMemory, userEmail, researchResults = []) {
   try {
     // Limit the number of events to 20
     const limitedEventList = events.slice(0, 20);
 
     // Format the calendar events for the LLM
     const formattedEvents = limitedEventList.map(event => formatCalendarEvent(event)).join('\n\n---\n\n');
+    
+    // Create a map of event IDs to their research findings for easy lookup
+    const researchMap = new Map(researchResults.map(r => [r.id, r.findings]));
 
     // Construct the prompt
-    const prompt = constructPrompt(formattedEvents, userMemory, userEmail);
+    const prompt = constructPrompt(formattedEvents, userMemory, userEmail, researchMap);
 
     // Call the Ollama API with proper error handling
     const ollamaResponse = await callOllamaAPI(prompt);

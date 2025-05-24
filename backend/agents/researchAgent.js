@@ -401,7 +401,8 @@ async function researchEvents(events, userMemory, client = searxngClient) {
                 findings: {
                     context_summary: formatContextSummary(researchResults),
                     venue_info: calendarEntry.location || "Unknown",
-                    event_type: researchResults.inferredEventType || "unknown"
+                    event_type: researchResults.inferredEventType || "unknown",
+                    query: researchResults.query || 'N/A' // Include the search query
                 }
             });
         } catch (error) {

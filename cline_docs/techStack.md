@@ -28,6 +28,10 @@
 - **Communication:** Structured data exchange (JSON)
 - **External Services:** SearXNG for web search functionality
 
+### Infrastructure
+- **Containerization:** Docker
+- **Container Orchestration:** Docker Compose
+
 ### User Memory System
 - **Storage:** JSON file-based persistence
 - **Structure:** Modular design with personal info, relationships, goals, and preferences

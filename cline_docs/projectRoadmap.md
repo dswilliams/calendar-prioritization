@@ -59,4 +59,5 @@
   - Implemented query construction logic to build effective search queries
   - Added result processing to extract meaningful information from search results
   - Implemented caching mechanism to avoid redundant searches
+  - Set up self-hosted SearXNG instance using Docker for reliable local search.
   - Added comprehensive test suite for the Research Agent

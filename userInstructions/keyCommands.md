@@ -1,31 +1,34 @@
 # Key Commands for Calendar Prioritizer
 
-This guide provides all the essential commands needed to run the Calendar Prioritizer application, including setting up and running Ollama, the local LLM, backend, and frontend.
+This guide provides all the essential commands needed to run the Calendar Prioritizer application, including setting up and running Ollama, the local LLM, SearXNG, backend, and frontend.
 
 ## Prerequisites
 
 Ensure you have the following installed:
 - Node.js and npm
 - Ollama (for running the local LLM)
-- A running instance of SearXNG (e.g., via Docker)
+- Docker and Docker Compose (for running SearXNG)
 
-## Configuring SearXNG
+## SearXNG Management
 
-The Research Agent uses a SearXNG instance for web searches. By default, it attempts to connect to `http://localhost:8080`. If your SearXNG instance is running at a different URL, you need to configure the `SEARXNG_URL` environment variable in the `.env` file in the `backend/` directory.
+The Research Agent uses a self-hosted SearXNG instance for web searches. Use the `dev_searxng.sh` script to manage the SearXNG Docker container.
 
-1.  Navigate to the `backend/` directory.
-2.  Open the `.env` file in a text editor.
-3.  Add or update the `SEARXNG_URL` variable with the URL of your SearXNG instance:
+```bash
+# Start SearXNG in detached mode and run tests
+./dev_searxng.sh start
 
-    ```dotenv
-    SEARXNG_URL=YOUR_SEARXNG_URL
-    ```
+# Stop the running SearXNG container
+./dev_searxng.sh stop
 
-    Replace `YOUR_SEARXNG_URL` with the actual URL (e.g., `http://your-searxng-instance.com` or `http://localhost:8081`).
+# Restart the SearXNG container
+./dev_searxng.sh restart
 
-4.  Save the `.env` file.
-5.  Restart the backend server for the changes to take effect.
+# View real-time logs from the SearXNG container
+./dev_searxng.sh logs
 
+# Run tests to verify SearXNG instance connectivity and functionality
+./dev_searxng.sh test
+```
 
 ## Step 1: Start Ollama
 
@@ -66,7 +69,16 @@ ollama list
 
 You should see `calendar-prioritizer` in the list of models.
 
-## Step 4: Start the Backend Server
+## Step 4: Start SearXNG
+
+Ensure your local SearXNG instance is running.
+
+```bash
+# Start SearXNG in detached mode and run tests
+./dev_searxng.sh start
+```
+
+## Step 5: Start the Backend Server
 
 Navigate to the project root directory and start the backend server:
 
@@ -77,7 +89,7 @@ node backend/index.js
 
 The backend server will start on http://localhost:5001.
 
-## Step 5: Start the Frontend Development Server
+## Step 6: Start the Frontend Development Server
 
 In a new terminal window, navigate to the project root directory and start the frontend development server:
 
@@ -91,7 +103,7 @@ npm run dev
 
 The frontend development server will start on http://localhost:5173 (or another port if 5173 is already in use).
 
-## Step 6: Access the Application
+## Step 7: Access the Application
 
 Open your web browser and navigate to:
 
@@ -138,22 +150,7 @@ curl -X POST http://localhost:11434/api/generate -d '{
 }'
 ```
 
-### Restart Services
-
-If you need to restart any of the services:
-
-```bash
-# Restart Ollama (first stop with Ctrl+C, then)
-ollama serve
-
-# Restart backend (first stop with Ctrl+C, then)
-node backend/index.js
-
-# Restart frontend (first stop with Ctrl+C, then)
-cd frontend && npm run dev
-```
-
-## Troubleshooting
+### Troubleshooting
 
 ### Ollama Issues
 
@@ -206,12 +203,16 @@ ollama serve
 # 2. Verify the calendar-prioritizer model
 ollama list
 
-# 3. Start the backend server
+# In a new terminal:
+# 3. Start SearXNG
+./dev_searxng.sh start
+
+# In a new terminal:
+# 4. Start the backend server
 node backend/index.js
 
 # In a new terminal:
-# 4. Start the frontend development server
+# 5. Start the frontend development server
 cd frontend && npm run dev
 
-# 5. Open the application in your browser at the URL shown in the frontend terminal output
-```
+# 6. Open the application in your browser at the URL shown in the frontend terminal output

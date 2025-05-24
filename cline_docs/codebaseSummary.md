@@ -37,6 +37,8 @@
 - cookie-parser
 - googleapis
 - dotenv
+- Docker
+- Docker Compose
 
 ### Recent Significant Changes
 - Initial project setup and documentation.
@@ -80,6 +82,8 @@
 - Added result processing to extract meaningful information from search results
 - Implemented caching mechanism to avoid redundant searches for identical events
 - Added comprehensive test suite for the Research Agent and SearXNG client
+- Set up self-hosted SearXNG instance using Docker.
+- Enhanced Research Agent output to include event details, search parameters, and impact on prioritization in the LLM prompt.
 
 ### User Feedback Integration and Its Impact on Development
 - N/A (initial project setup)

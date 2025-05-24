@@ -1,0 +1,28 @@
+use_default_settings: true
+server:
+  port: 8080
+  bind_address: "0.0.0.0"
+  secret_key: "230bf3933ae4cda8c0ce067f28c956f390352443b1536d55e15330239564ae13"
+  
+search:
+  safe_search: 0
+  autocomplete: ""
+  default_lang: "en"
+  formats:
+    - html
+    - json
+
+engines:
+  - name: google
+    disabled: false
+  - name: bing
+    disabled: false
+  - name: duckduckgo
+    disabled: false
+  - name: startpage
+    disabled: false
+
+outgoing:
+  request_timeout: 10.0
+  useragent_suffix: ""
+  max_request_timeout: 20.0
