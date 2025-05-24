@@ -15,6 +15,7 @@ function App() {
   const [error, setError] = useState(null);
   const [initialFetchDone, setInitialFetchDone] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [showResearchFindings, setShowResearchFindings] = useState(false);
   const [activeView, setActiveView] = useState('calendar'); // 'calendar' or 'profile'
 
   // Function to fetch calendar data
@@ -71,7 +72,7 @@ function App() {
       setError(error.message);
     } finally {
       setIsLoading(false);
-      setShowPrompt(true); // Keep showing prompt button
+      // setShowPrompt(true); // Removed: Prompt should be closed by default
     }
   };
 
@@ -180,19 +181,29 @@ function App() {
 
                 {researchResults && researchResults.length > 0 && (
                   <div className="mt-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Research Findings</h3>
-                    {researchResults.map((result, index) => result.research_conducted && (
-                      <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
-                        <h4 className="font-medium text-gray-700">Event ID: {result.calendar_entry_id}</h4>
-                        <p className="text-sm text-gray-600">Confidence: {result.confidence_level}</p>
-                        {result.findings.event_type && <p className="text-sm text-gray-600">Type: {result.findings.event_type}</p>}
-                        {result.findings.venue_info && <p className="text-sm text-gray-600">Venue: {result.findings.venue_info}</p>}
-                        {result.findings.context_summary && <p className="text-sm text-gray-600">Summary: {result.findings.context_summary}</p>}
-                        {result.findings.keywords_found && result.findings.keywords_found.length > 0 && (
-                          <p className="text-sm text-gray-600">Keywords: {result.findings.keywords_found.join(', ')}</p>
-                        )}
+                    <button
+                      onClick={() => setShowResearchFindings(!showResearchFindings)}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded mb-2"
+                    >
+                      {showResearchFindings ? 'Hide Research Findings' : 'Show Research Findings'}
+                    </button>
+                    {showResearchFindings && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-2">Research Findings</h3>
+                        {researchResults.map((result, index) => result.research_conducted && (
+                          <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
+                            <h4 className="font-medium text-gray-700">Event ID: {result.calendar_entry_id}</h4>
+                            <p className="text-sm text-gray-600">Confidence: {result.confidence_level}</p>
+                            {result.findings.event_type && <p className="text-sm text-gray-600">Type: {result.findings.event_type}</p>}
+                            {result.findings.venue_info && <p className="text-sm text-gray-600">Venue: {result.findings.venue_info}</p>}
+                            {result.findings.context_summary && <p className="text-sm text-gray-600">Summary: {result.findings.context_summary}</p>}
+                            {result.findings.keywords_found && result.findings.keywords_found.length > 0 && (
+                              <p className="text-sm text-gray-600">Keywords: {result.findings.keywords_found.join(', ')}</p>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
               </div>
@@ -241,18 +252,14 @@ function App() {
           <div className="mt-6">
             <button
               onClick={() => setShowPrompt(!showPrompt)}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded"
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded mb-2"
             >
               {showPrompt ? 'Hide Prompt' : 'Show Prompt'}
             </button>
-            {showPrompt && prompt && (
+            {showPrompt && (
               <div className="bg-gray-100 border border-gray-200 rounded-lg p-6 mt-2">
-                <pre className="text-gray-700">{prompt}</pre>
-              </div>
-            )}
-            {showPrompt && !prompt && error && (
-              <div className="bg-gray-100 border border-gray-200 rounded-lg p-6 mt-2">
-                <p className="text-gray-700">No prompt available due to an error.</p>
+                {prompt && <pre className="text-gray-700">{prompt}</pre>}
+                {!prompt && error && <p className="text-gray-700">No prompt available due to an error.</p>}
               </div>
             )}
           </div>
