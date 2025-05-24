@@ -30,28 +30,51 @@ The primary agent responsible for analyzing calendar events, applying prioritiza
 *   **LLM:** Ollama (`calendar-prioritizer` model or a refined version).
 *   **Communication:** Internal function calls or structured data exchange.
 
-## 2. Research Agent (Specialized Agent - Future)
+## 2. Research Agent (Specialized Agent)
 
 ### Role
-Provides additional context for calendar events by performing external research, primarily web searches.
+Provides additional context for calendar events by performing external research, primarily web searches using SearXNG.
 
 ### Triggers
-*   Called by the Prioritization Agent when an event has a vague title, missing description, or requires external information for better prioritization.
+*   Called by the Orchestrator when the `options.researchEvents` flag is true.
+*   Determines internally if research is needed for a specific event based on its content (title, description, location).
 
 ### Inputs
-*   Event title, description, and any other relevant keywords from the Prioritization Agent.
+*   Array of calendar events.
+*   User memory (for potential user location context).
 
 ### Core Logic
-*   **Web Search:** Utilizes web search tools (e.g., `browser_action` or a dedicated MCP tool for search APIs).
-*   **Information Extraction & Summarization:** Processes search results to extract relevant information and summarizes it concisely.
+*   **Context Analysis:** Determines if an event requires research based on generic terms, ambiguous locations, or acronyms.
+*   **Query Construction:** Extracts searchable terms from the event.
+*   **Web Search:** Calls the `searxngClient` to perform web searches via the SearXNG API.
+*   **Content Analysis:** Processes search results to extract relevant information, categorize findings (event type, venue info, context summary), and identify keywords.
+*   **Caching:** Uses an in-memory cache to store research results and avoid duplicate searches for the same event.
 
 ### Outputs
-*   A summary of research findings relevant to the event.
+*   An array of structured research results, one object per event, with the following format:
+    ```json
+    {
+      "calendar_entry_id": "string",
+      "research_conducted": true,
+      "confidence_level": "high|medium|low|none",
+      "findings": {
+        "event_type": "business|personal|social|unknown",
+        "venue_info": "string or null",
+        "context_summary": "string",
+        "keywords_found": ["array", "of", "relevant", "terms"]
+      },
+      "search_metadata": {
+        "queries_used": ["array of search terms"],
+        "results_processed": "number",
+        "timestamp": "ISO datetime"
+      }
+    }
+    ```
 
 ### Technology
-*   **LLM:** Potentially a smaller, specialized LLM for summarization, or direct tool use.
-*   **Tools:** Web search APIs, `browser_action`.
-*   **Communication:** Exposed as an MCP server tool.
+*   **Language:** Node.js
+*   **Dependencies:** `searxngClient.js` utility module.
+*   **Communication:** Called directly by the Orchestrator.
 
 ## 3. Relationship Agent (Specialized Agent - Future)
 
@@ -79,15 +102,15 @@ Provides context on the relationships between the user and event attendees.
 ## Agent Orchestration
 
 ### Role
-Manages the flow of information and calls between different agents. Currently, this role is implicitly handled by `backend/index.js`. In the future, it could become a more explicit module or even a dedicated orchestrator agent.
+Manages the flow of information and calls between different agents. This is handled by the `backend/agents/orchestrator.js` module.
 
 ### Responsibilities
 *   Receiving initial requests (e.g., from the frontend for calendar prioritization).
-*   Calling the Prioritization Agent.
-*   Handling conditional calls to specialized agents (Research, Relationship) based on the Prioritization Agent's needs.
+*   Calling the Research Agent if the `options.researchEvents` flag is true.
+*   Calling the Relationship Agent if the `options.analyzeRelationships` flag is true (future implementation).
+*   Calling the Prioritization Agent with the original events and results from other agents.
 *   Aggregating results from all agents and formatting the final response.
 
 ### Technology
-*   Node.js (current `backend/index.js`).
-*   Potentially a state machine or workflow engine for complex orchestrations.
-*   MCP for inter-agent communication.
+*   Node.js (`backend/agents/orchestrator.js`).
+*   Direct function calls to other agent modules.

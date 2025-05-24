@@ -210,7 +210,7 @@ app.get('/api/calendar', async (req, res) => {
         {
           // Enable these options when the agents are fully implemented
           analyzeRelationships: false,
-          researchEvents: false
+          researchEvents: true
         }
       );
       
@@ -220,9 +220,10 @@ app.get('/api/calendar', async (req, res) => {
       // Return the results to the client
       console.log('Sending response to client with prioritized data');
       res.json({
-        response: orchestrationResults.prioritization.response,
-        prompt: orchestrationResults.prioritization.prompt,
-        // Include additional data from other agents if available
+        prioritization: {
+          response: orchestrationResults.prioritization.response,
+          prompt: orchestrationResults.prioritization.prompt
+        },
         relationships: orchestrationResults.relationships,
         research: orchestrationResults.research
       });

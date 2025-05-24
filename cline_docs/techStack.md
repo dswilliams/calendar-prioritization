@@ -21,9 +21,12 @@
 ### AI Agent System
 - **Architecture:** Modular multi-agent system
 - **Core Agent:** Prioritization Agent for calendar event analysis
-- **Specialized Agents:** Research Agent, Relationship Agent (placeholder implementations)
+- **Specialized Agents:** 
+  - Research Agent (implemented with SearXNG web search capabilities)
+  - Relationship Agent (placeholder implementation)
 - **Orchestration:** Central orchestrator for agent coordination
 - **Communication:** Structured data exchange (JSON)
+- **External Services:** SearXNG for web search functionality
 
 ### User Memory System
 - **Storage:** JSON file-based persistence

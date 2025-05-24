@@ -9,7 +9,7 @@
 - [ ] UI/UX: Implement slow moving animations and a scientific, yet approachable feel to the front end
 - [x] Implement user memory system for personalized calendar prioritization
 - [x] Convert prioritization logic into a modular AI agent system (Phase 1)
-- [ ] Enhance AI agent system with specialized agents for research and relationship context
+- [x] Enhance AI agent system with specialized agents for research (completed) and relationship context (in progress)
 
 ### Key Features
 - [x] User authentication and authorization (Google Calendar Implemented)
@@ -53,3 +53,10 @@
   - Created placeholder Relationship Agent for future relationship context
   - Implemented Agent Orchestrator to manage agent interactions
   - Created comprehensive documentation in agentArchitecture.md
+- Enhanced Research Agent with web search capabilities (Phase 2)
+  - Implemented SearXNG client for web search functionality
+  - Created robust error handling and instance management for SearXNG client
+  - Implemented query construction logic to build effective search queries
+  - Added result processing to extract meaningful information from search results
+  - Implemented caching mechanism to avoid redundant searches
+  - Added comprehensive test suite for the Research Agent

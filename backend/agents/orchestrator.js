@@ -36,14 +36,14 @@ async function orchestrateCalendarPrioritization(events, userMemory, userEmail, 
     // Step 3: Research vague event titles/descriptions
     // This is a placeholder for future integration
     // In the future, we would selectively call the research agent for events that need it
-    const researchResults = {};
+    let researchResults = [];
     if (options.researchEvents) {
-      console.log('Orchestrator: Researching events (placeholder)');
-      // This would be implemented in the future
+      console.log('Orchestrator: Researching events with Research Agent');
+      researchResults = await researchAgent.researchEvents(events, userMemory);
     }
     
     // Step 4: Prioritize events using the prioritization agent
-    console.log('Orchestrator: Prioritizing events');
+    console.log('Orchestrator: Prioritizing events with Prioritization Agent');
     const prioritizationResults = await prioritizationAgent.prioritizeEvents(
       events, 
       userMemory, 

@@ -10,6 +10,7 @@ function App() {
   const [events, setEvents] = useState([]);
   const [prioritizedData, setPrioritizedData] = useState(null);
   const [prompt, setPrompt] = useState(null);
+  const [researchResults, setResearchResults] = useState(null); // New state for research results
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [initialFetchDone, setInitialFetchDone] = useState(false);
@@ -49,15 +50,20 @@ function App() {
       const data = await response.json();
       console.log('Calendar data received:', data);
 
-      if (data && data.response && data.prompt) {
-        setPrioritizedData(data.response);
-        setPrompt(data.prompt);
+      if (data && data.prioritization && data.prioritization.response && data.prioritization.prompt) {
+        setPrioritizedData(data.prioritization.response);
+        setPrompt(data.prioritization.prompt);
+        setResearchResults(data.research || null); // Store research results
+        // setRelationships(data.relationships || null); // Future: store relationship data
+        console.log('Frontend: Prioritized data set:', data.prioritization.response ? data.prioritization.response.substring(0, 50) + '...' : 'empty');
+        console.log('Frontend: Research results set:', data.research);
       } else if (data.message) {
         // Handle error messages from the API
         throw new Error(data.message);
       } else {
-        // If it's structured data
-        setEvents(data);
+        // Handle unexpected data structure
+        console.error('Unexpected data structure from API:', data);
+        throw new Error('Received unexpected data from the server.');
       }
 
     } catch (error) {
@@ -65,36 +71,28 @@ function App() {
       setError(error.message);
     } finally {
       setIsLoading(false);
-      setShowPrompt(true);
+      setShowPrompt(true); // Keep showing prompt button
     }
   };
 
   useEffect(() => {
-    // Get authentication status from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const authParam = urlParams.get('auth');
 
-    // Update auth status based on URL parameter
     if (authParam === 'success') {
       setAuthStatus('success');
-      
-      // Fetch calendar events only when auth is successful and initial fetch hasn't been done
-      if (!initialFetchDone) {
-        fetchCalendarEvents();
-        setInitialFetchDone(true);
-      }
+      // Clean up URL parameters immediately after processing
+      const url = new URL(window.location);
+      url.searchParams.delete('auth');
+      window.history.replaceState({}, '', url);
     } else if (authParam === 'error') {
       setAuthStatus('error');
-    }
-    
-    // Clean up URL parameters after processing
-    if (authParam) {
       const url = new URL(window.location);
       url.searchParams.delete('auth');
       window.history.replaceState({}, '', url);
     }
     
-    // Check for existing connection cookie
+    // Check for existing connection cookie on initial load
     const checkConnectionStatus = () => {
       const cookies = document.cookie.split(';');
       for (let i = 0; i < cookies.length; i++) {
@@ -107,11 +105,19 @@ function App() {
       return false;
     };
     
-    // Only fetch calendar data on initial load if not already fetched
-    if (!authParam && checkConnectionStatus() && !initialFetchDone) {
+    // If not authenticated via URL param, check cookie
+    if (!authParam && checkConnectionStatus()) {
+      // authStatus is already set to 'success' by checkConnectionStatus
+    }
+  }, []); // Run only once on component mount
+
+  // Separate useEffect to fetch data when authStatus is success and not yet fetched
+  useEffect(() => {
+    if (authStatus === 'success' && !initialFetchDone) {
+      fetchCalendarEvents();
       setInitialFetchDone(true);
     }
-  }, [initialFetchDone]); // Add initialFetchDone to dependency array
+  }, [authStatus, initialFetchDone]); // Depend on authStatus and initialFetchDone
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -171,6 +177,24 @@ function App() {
             ) : prioritizedData ? (
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <pre className="text-gray-700">{prioritizedData}</pre>
+
+                {researchResults && researchResults.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">Research Findings</h3>
+                    {researchResults.map((result, index) => result.research_conducted && (
+                      <div key={index} className="mb-4 p-4 border border-gray-200 rounded-md">
+                        <h4 className="font-medium text-gray-700">Event ID: {result.calendar_entry_id}</h4>
+                        <p className="text-sm text-gray-600">Confidence: {result.confidence_level}</p>
+                        {result.findings.event_type && <p className="text-sm text-gray-600">Type: {result.findings.event_type}</p>}
+                        {result.findings.venue_info && <p className="text-sm text-gray-600">Venue: {result.findings.venue_info}</p>}
+                        {result.findings.context_summary && <p className="text-sm text-gray-600">Summary: {result.findings.context_summary}</p>}
+                        {result.findings.keywords_found && result.findings.keywords_found.length > 0 && (
+                          <p className="text-sm text-gray-600">Keywords: {result.findings.keywords_found.join(', ')}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : null}
           </div>

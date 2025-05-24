@@ -7,9 +7,10 @@
 - **Microsoft Graph API:** (Not yet implemented) Fetches calendar events from Microsoft Calendar.
 - **AI Agent System:** Modular system for calendar prioritization and analysis:
   - **Prioritization Agent:** Core agent that analyzes and prioritizes calendar events.
-  - **Research Agent:** (Placeholder) Will provide additional context for events through web searches.
-  - **Relationship Agent:** (Placeholder) Will provide relationship context for event attendees.
-  - **Orchestrator:** Manages the flow of information between agents.
+- **Research Agent:** Provides additional context for events through web searches using SearXNG.
+- **Relationship Agent:** (Placeholder) Will provide relationship context for event attendees.
+- **Orchestrator:** Manages the flow of information between agents.
+- **SearXNG Client:** Utility module for interacting with the SearXNG web search API.
 - **Ollama API:** Provides LLM capabilities to the Prioritization Agent using the Mistral 7B model.
 - **User Memory System:** Stores and manages user information for personalized calendar prioritization.
 
@@ -20,9 +21,9 @@
 4. Backend retrieves user memory data for personalization.
 5. Backend passes events and user data to the Agent Orchestrator.
 6. Agent Orchestrator coordinates the flow between agents:
-   - Prioritization Agent analyzes and ranks events using the Ollama API.
-   - (Future) Research Agent provides additional context for vague events.
-   - (Future) Relationship Agent provides context on attendee relationships.
+   - If needed, the Research Agent is called to provide additional context for vague events using the SearXNG Client.
+   - (Future) If needed, the Relationship Agent is called to provide context on attendee relationships.
+   - The Prioritization Agent analyzes and ranks events using the Ollama API, incorporating results from other agents.
 7. Agent Orchestrator aggregates results from all agents.
 8. Backend formats the response and sends it to the Frontend.
 9. Frontend parses and displays the structured results to the user.
@@ -73,6 +74,12 @@
 - Created dedicated agent modules (prioritizationAgent.js, researchAgent.js, relationshipAgent.js)
 - Implemented Agent Orchestrator to manage agent interactions
 - Created comprehensive documentation of the agent architecture
+- Implemented SearXNG client for web search functionality in the Research Agent
+- Created robust error handling and instance management for SearXNG client
+- Implemented query construction logic to build effective search queries from calendar entries
+- Added result processing to extract meaningful information from search results
+- Implemented caching mechanism to avoid redundant searches for identical events
+- Added comprehensive test suite for the Research Agent and SearXNG client
 
 ### User Feedback Integration and Its Impact on Development
 - N/A (initial project setup)

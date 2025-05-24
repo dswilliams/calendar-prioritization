@@ -7,6 +7,25 @@ This guide provides all the essential commands needed to run the Calendar Priori
 Ensure you have the following installed:
 - Node.js and npm
 - Ollama (for running the local LLM)
+- A running instance of SearXNG (e.g., via Docker)
+
+## Configuring SearXNG
+
+The Research Agent uses a SearXNG instance for web searches. By default, it attempts to connect to `http://localhost:8080`. If your SearXNG instance is running at a different URL, you need to configure the `SEARXNG_URL` environment variable in the `.env` file in the `backend/` directory.
+
+1.  Navigate to the `backend/` directory.
+2.  Open the `.env` file in a text editor.
+3.  Add or update the `SEARXNG_URL` variable with the URL of your SearXNG instance:
+
+    ```dotenv
+    SEARXNG_URL=YOUR_SEARXNG_URL
+    ```
+
+    Replace `YOUR_SEARXNG_URL` with the actual URL (e.g., `http://your-searxng-instance.com` or `http://localhost:8081`).
+
+4.  Save the `.env` file.
+5.  Restart the backend server for the changes to take effect.
+
 
 ## Step 1: Start Ollama
 
