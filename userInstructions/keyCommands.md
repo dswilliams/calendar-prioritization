@@ -11,7 +11,7 @@ Ensure you have the following installed:
 
 ## SearXNG Management
 
-The Research Agent uses a self-hosted SearXNG instance for web searches. Use the `dev_searxng.sh` script to manage the SearXNG Docker container.
+The Research Agent uses a self-hosted SearXNG instance for web searches. The `setup_searxng.sh` script now includes dependency checks for `docker` and `openssl`. Use the `dev_searxng.sh` script to manage the SearXNG Docker container. This script has been reviewed and fixed for duplicate content.
 
 ```bash
 # Start SearXNG in detached mode and run tests

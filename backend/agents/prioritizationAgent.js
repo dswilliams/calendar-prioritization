@@ -159,7 +159,7 @@ Last Updated: ${updated}`;
  * @param {string} userEmail - The user's email address
  * @returns {string} - The constructed prompt
  */
-function constructPrompt(formattedEvents, userMemory, userEmail, researchMap) {
+function constructPrompt(formattedEvents, userMemory, userEmail, researchMap, limitedEventList) {
   // Extract user information from memory with fallbacks to defaults
   const personalInfo = userMemory.personalInfo || {};
   const relationships = userMemory.relationships || [];
@@ -273,7 +273,7 @@ async function prioritizeEvents(events, userMemory, userEmail, researchResults =
     const researchMap = new Map(researchResults.map(r => [r.id, r.findings]));
 
     // Construct the prompt
-    const prompt = constructPrompt(formattedEvents, userMemory, userEmail, researchMap);
+    const prompt = constructPrompt(formattedEvents, userMemory, userEmail, researchMap, limitedEventList);
 
     // Call the Ollama API with proper error handling
     const ollamaResponse = await callOllamaAPI(prompt);

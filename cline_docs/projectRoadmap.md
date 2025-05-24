@@ -60,4 +60,6 @@
   - Added result processing to extract meaningful information from search results
   - Implemented caching mechanism to avoid redundant searches
   - Set up self-hosted SearXNG instance using Docker for reliable local search.
+  - Refactored `setup_searxng.sh` to remove hardcoded macOS Docker path and add cross-platform dependency checks for `docker` and `openssl`.
   - Added comprehensive test suite for the Research Agent
+  - Reviewed and fixed `dev_searxng.sh` for duplicate content.

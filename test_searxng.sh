@@ -1,5 +1,14 @@
 #!/bin/bash
-echo "Testing local SearXNG instance..."
+
+# Check for required dependencies
+for cmd in curl jq; do
+    if ! command -v "$cmd" &> /dev/null; then
+        echo "Error: $cmd is required but not installed"
+        exit 1
+    fi
+done
+
+ echo "Testing local SearXNG instance..."
 
 # Test basic connectivity
 echo "1. Testing basic connectivity..."

@@ -1,8 +1,13 @@
 #!/bin/bash
 echo "Setting up local SearXNG instance..."
 
-# Ensure Docker Compose is in PATH
-export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
+# Check for required dependencies
+for cmd in docker openssl; do
+  if ! command -v "$cmd" &> /dev/null; then
+    echo "Error: $cmd is required but not installed"
+    exit 1
+  fi
+done
 
 # Create searxng directory if it doesn't exist
 mkdir -p searxng

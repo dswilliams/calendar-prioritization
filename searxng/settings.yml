@@ -2,7 +2,7 @@ use_default_settings: true
 server:
   port: 8080
   bind_address: "0.0.0.0"
-  secret_key: "230bf3933ae4cda8c0ce067f28c956f390352443b1536d55e15330239564ae13"
+  secret_key: !env SECRET_KEY
   
 search:
   safe_search: 0

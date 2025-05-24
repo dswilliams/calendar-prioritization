@@ -83,6 +83,8 @@
 - Implemented caching mechanism to avoid redundant searches for identical events
 - Added comprehensive test suite for the Research Agent and SearXNG client
 - Set up self-hosted SearXNG instance using Docker.
+- Refactored `setup_searxng.sh` to remove hardcoded macOS Docker path and add cross-platform dependency checks for `docker` and `openssl`.
+- Reviewed and fixed `dev_searxng.sh` for duplicate content.
 - Enhanced Research Agent output to include event details, search parameters, and impact on prioritization in the LLM prompt.
 
 ### User Feedback Integration and Its Impact on Development

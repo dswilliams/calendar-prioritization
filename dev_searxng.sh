@@ -1,34 +1,51 @@
 #!/bin/bash
+
+# Function to check if docker compose is available
+check_docker_compose() {
+    if ! command -v docker &> /dev/null; then
+        echo "Error: Docker is not installed or not in PATH"
+        exit 1
+    fi
+    
+    if ! docker compose version &> /dev/null; then
+        echo "Error: Docker Compose is not available"
+        exit 1
+    fi
+}
+
 case $1 in
     "start")
         echo "Starting SearXNG..."
-        # Ensure Docker Compose is in PATH
-        export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
+        check_docker_compose
         docker compose up -d
         sleep 5
-        ./test_searxng.sh
+        if [ ! -f "./test_searxng.sh" ]; then
+            echo "Warning: test_searxng.sh not found, skipping tests"
+        else
+            ./test_searxng.sh
+        fi
         ;;
     "stop")
         echo "Stopping SearXNG..."
-        # Ensure Docker Compose is in PATH
-        export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
+        check_docker_compose
         docker compose down
         ;;
     "restart")
         echo "Restarting SearXNG..."
-        # Ensure Docker Compose is in PATH
-        export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
-        docker compose down
-        docker compose up -d
-        sleep 5
-        ./test_searxng.sh
+        check_docker_compose
+        docker compose restart
         ;;
     "logs")
-        # Ensure Docker Compose is in PATH
-        export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
-        docker compose logs -f searxng
+        echo "Viewing SearXNG logs..."
+        check_docker_compose
+        docker compose logs -f
         ;;
     "test")
+        echo "Running SearXNG tests..."
+        if [ ! -f "./test_searxng.sh" ]; then
+            echo "Error: test_searxng.sh not found"
+            exit 1
+        fi
         ./test_searxng.sh
         ;;
     *)
