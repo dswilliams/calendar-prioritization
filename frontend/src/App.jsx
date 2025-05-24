@@ -114,11 +114,12 @@ function App() {
 
   // Separate useEffect to fetch data when authStatus is success and not yet fetched
   useEffect(() => {
-    if (authStatus === 'success' && !initialFetchDone) {
+    // Only fetch if authenticated, not already fetching, and not already done with initial fetch
+    if (authStatus === 'success' && !isLoading && !initialFetchDone) {
       fetchCalendarEvents();
       setInitialFetchDone(true);
     }
-  }, [authStatus, initialFetchDone]); // Depend on authStatus and initialFetchDone
+  }, [authStatus, isLoading, initialFetchDone]); // Depend on authStatus, isLoading, and initialFetchDone
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -248,7 +249,6 @@ function App() {
           </div>
         )}
         
-        {(prompt || error) && (
           <div className="mt-6">
             <button
               onClick={() => setShowPrompt(!showPrompt)}
@@ -263,7 +263,6 @@ function App() {
               </div>
             )}
           </div>
-        )}
       </div>
     </div>
   );

@@ -22,34 +22,48 @@ function UserProfile() {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [activeTab, setActiveTab] = useState('personal');
-  
+
   // Fetch user memory data
   useEffect(() => {
+    const abortController = new AbortController();
+    const signal = abortController.signal;
+
+    console.log('UserProfile: Initiating fetchUserMemory...');
     const fetchUserMemory = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         const response = await fetch('http://localhost:5001/api/user', {
-          credentials: 'include'
+          credentials: 'include',
+          signal: signal // Pass the signal to the fetch request
         });
-        
+
         if (!response.ok) {
           throw new Error(`Failed to fetch user data: ${response.status}`);
         }
-        
+
         const data = await response.json();
         setUserMemory(data);
       } catch (error) {
+        if (error.name === 'AbortError') {
+          console.log('UserProfile: Fetch aborted.');
+          return; // Ignore aborted fetches
+        }
         console.error('Error fetching user memory:', error);
         setError('Failed to load user profile. Please try again.');
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     fetchUserMemory();
-  }, []);
+
+    // Cleanup function: abort the fetch if the component unmounts or the effect re-runs
+    return () => {
+      abortController.abort();
+    };
+  }, []); // Empty dependency array to run only on mount and cleanup on unmount
   
   // Save user memory data
   const saveUserMemory = async () => {
